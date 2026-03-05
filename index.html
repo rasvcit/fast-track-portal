@@ -1551,11 +1551,38 @@ function copySQL(){
   // Normal portal: show main app
   document.getElementById('appScreen').style.display='block';
 
-  // If arriving with just ?id= (view a specific request)
+  // If arriving with just ?id= (from SC review email → requestor clicks link)
   if(urlId){
     window.history.replaceState({},'',window.location.href.split('?')[0]);
-    switchView('history');
-    setTimeout(()=>openDetail(urlId), 500);
+    // Load the request and check if it needs action from the requestor (stage 3)
+    let linked = SUPABASE ? await dbLoad(urlId) : null;
+    if(!linked){
+      const raw = localLoadById(urlId);
+      if(raw) linked = {
+        stage: isNaN(raw.stage)?raw.stage:Number(raw.stage),
+        formData: raw,
+        scData:{scName:raw.scName,scEmail:raw.scEmail,bomStatus:raw.bomStatus,toolingStatus:raw.toolingStatus,orderImpact:raw.orderImpact,leadTime:raw.leadTime,scDecision:raw.scDecision,scComments:raw.scComments,reviewedAt:raw.reviewedAt},
+        mgmtData:{mgmtDecision:raw.mgmtDecision,mgmtComments:raw.mgmtComments,reviewedAt:raw.mgmtReviewedAt},
+        escalationReason:raw.escalationReason||'',
+      };
+    }
+    // Stage 3 = SC has reviewed, requestor needs to accept or escalate → load into form
+    if(linked && (linked.stage===3 || linked.stage==='3')){
+      S.formData = linked.formData;
+      S.stage = 3;
+      S.scData = linked.scData||{};
+      S.mgmtData = linked.mgmtData||{};
+      S.escalationReason = linked.escalationReason||'';
+      if(linked.formData.expediteFee) S.radio.expediteFee = linked.formData.expediteFee;
+      if(linked.formData.orderType)   S.radio.orderType   = linked.formData.orderType;
+      renderView();
+      switchView('form');
+      window.scrollTo(0,0);
+    } else {
+      // All other stages → show in history detail view
+      switchView('history');
+      setTimeout(()=>openDetail(urlId), 500);
+    }
     return;
   }
 
