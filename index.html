@@ -244,7 +244,7 @@ footer strong{color:rgba(255,255,255,0.4)}
     <div class="hist-table-wrap">
       <table class="hist-table">
         <thead><tr>
-          <th>Date</th><th>Requestor</th><th>Customer</th><th>Part Number</th><th>Quote / SOP</th>
+          <th id="thDate" onclick="toggleDateSort()" style="cursor:pointer;user-select:none;white-space:nowrap">Date <span id="sortArrow">&#9660;</span></th><th>Requestor</th><th>Customer</th><th>Part Number</th><th>Quote / SOP</th>
           <th>Status</th><th>Supply Chain Decision</th><th>Mgmt Review</th><th>Mgmt Decision</th>
         </tr></thead>
         <tbody id="histBody"></tbody>
@@ -1038,6 +1038,14 @@ async function acceptClose(){
 // HISTORY
 // ═══════════════════════════════════════════════
 let _histData = []; // cached for filtering
+let _histSortDesc = true; // default: latest first
+
+function toggleDateSort(){
+  _histSortDesc = !_histSortDesc;
+  const arrow = document.getElementById('sortArrow');
+  if(arrow) arrow.innerHTML = _histSortDesc ? '&#9660;' : '&#9650;';
+  filterHistory();
+}
 
 async function renderHistory(){
   document.getElementById('histBody').innerHTML='<tr><td colspan="9"><div class="loading-hist">&#9203; Loading\u2026</div></td></tr>';
@@ -1102,6 +1110,11 @@ function filterHistory(){
 }
 
 function renderHistoryRows(h){
+  // Sort by submittedAt according to current sort direction
+  const sorted = [...h].sort((a,b)=>{
+    const av = String(a.submittedAt||''), bv = String(b.submittedAt||'');
+    return _histSortDesc ? bv.localeCompare(av) : av.localeCompare(bv);
+  });
   const tbody=document.getElementById('histBody');
   if(!h.length){
     tbody.innerHTML='<tr><td colspan="9"><div class="no-hist"><div style="font-size:2rem;margin-bottom:0.5rem">&#128269;</div>No matching requests found.</div></td></tr>';
@@ -1131,7 +1144,7 @@ function renderHistoryRows(h){
     const cls=r.mgmtDecision==='Approved'?'sts-ok':r.mgmtDecision==='Declined'?'sts-no':'sts-2';
     return '<span class="sts '+cls+'">'+esc(r.mgmtDecision)+'</span>';
   };
-  tbody.innerHTML=h.map(r=>
+  tbody.innerHTML=sorted.map(r=>
     '<tr onclick="openDetail(\''+r.id+'\')" title="Click to view full details">'+
     '<td style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">'+(r.submittedAt||'\u2014')+'</td>'+
     '<td style="font-weight:600">'+esc(r.requestorName||'\u2014')+'</td>'+
@@ -1726,17 +1739,4 @@ function copySQL(){
   const last = localLoadLast();
   if(last && last.id && (last.stage===2||last.stage===3||last.stage==='3b')){
     S.formData = last;
-    S.stage = isNaN(last.stage)?last.stage:Number(last.stage);
-    S.scData = {scName:last.scName,scEmail:last.scEmail,bomStatus:last.bomStatus,toolingStatus:last.toolingStatus,orderImpact:last.orderImpact,leadTime:last.leadTime,scDecision:last.scDecision,scComments:last.scComments,reviewedAt:last.reviewedAt};
-    S.mgmtData = {mgmtDecision:last.mgmtDecision,mgmtComments:last.mgmtComments,reviewedAt:last.mgmtReviewedAt};
-    S.escalationReason = last.escalationReason||'';
-    if(last.expediteFee) S.radio.expediteFee=last.expediteFee;
-    if(last.orderType)   S.radio.orderType=last.orderType;
-  }
-
-  renderView();
-  switchView('history');
-})();
-</script>
-</body>
-</html>
+    S.stage = isNaN(last.stage
