@@ -341,8 +341,8 @@ const CFG = {
   svc:       'service_yvvqhwq',
   t1:        'template_6l6gwas',  // New request → Supply Chain
   t2:        'template_sg4j83f',  // All other notifications
-  scEmails:  'drafiq@rubberatkins.com,taran@rubberatkins.com',
-  mgmtEmail: 'drafiq@rubberatkins.com,taran@rubberatkins.com',
+  scEmails:  'drafiq@rubberatkins.com',
+  mgmtEmail: 'drafiq@rubberatkins.com',
 };
 
 // ═══════════════════════════════════════════════
@@ -532,12 +532,11 @@ async function sendEmail(tid, params){
 
 function portalUrl(id, action){
   const base = window.location.href.split('?')[0].replace(/#.*$/,'');
+  if(action && id) return base + '#action=' + encodeURIComponent(action) + '&id=' + encodeURIComponent(id);
   const p = [];
-  if(id)     p.push('id='+encodeURIComponent(id));
-  if(action) p.push('action='+encodeURIComponent(action));
+  if(id) p.push('id='+encodeURIComponent(id));
   return base + (p.length ? '?'+p.join('&') : '');
 }
-
 function emailWrap(icon, title, intro, tableRows, boxes, actionNote, btnLabel, btnUrl){
   const url = btnUrl||portalUrl();
   const hdr = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111"><div style="background:#0f0f0e;padding:20px 24px;border-radius:8px 8px 0 0"><div style="font-size:1.3rem;font-weight:800;color:#fff">RA</div><div style="font-size:0.7rem;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase">Rubberatkins \u2014 Fast Track Portal</div></div><div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px">';
@@ -708,8 +707,8 @@ async function handleActionPage(id, action){
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">'+
       '<div class="field"><label>Your Name <span class="req">*</span></label><input id="ac_scName" placeholder="Full name"></div>'+
       '<div class="field"><label>Your Email <span class="req">*</span></label><input type="email" id="ac_scEmail" placeholder="you@company.com"></div>'+
-      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ac_bom"><option value="">Select\u2026</option><option>Complete</option><option>Incomplete</option><option>Not Required</option></select></div>'+
-      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ac_tool"><option value="">Select\u2026</option><option>Ready</option><option>In Progress</option><option>Not Required</option><option>Blocked</option></select></div>'+
+      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ac_bom"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option></select></div>'+
+      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ac_tool"><option value="">Select\u2026</option><option>Existing</option><option>New \u2013 Internal</option><option>New \u2013 External</option></select></div>'+
       '<div class="field"><label>Impact to Other Orders <span class="req">*</span></label><input id="ac_impact" placeholder="Describe any impact"></div>'+
       '<div class="field"><label>Lead Time <span class="req">*</span></label><input id="ac_lead" placeholder="e.g. 3\u20134 weeks"></div>'+
       '</div>'+
@@ -1212,6 +1211,61 @@ function buildDetailHTML(data, id){
       '</div>' : '')+
 
     '<div style="padding:1rem 1.6rem;border-top:1px solid var(--border);font-size:0.65rem;color:var(--muted);text-align:center">Rubberatkins Fast Track Portal &nbsp;&middot;&nbsp; Internal Use Only</div>'+
+
+    // Inline SC Review action panel (stage 2 only)
+    (data.stage===2?
+      '<div id="inlineActionPanel" style="padding:1.4rem 1.6rem;border-top:2px solid #bfdbfe;background:#eff6ff">'+
+      '<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#1e40af;margin-bottom:1rem">&#128269; Supply Chain Review — Process Inline</div>'+
+      '<div id="inlinePinGate_'+id+'">'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+      '<input type="password" id="inlinePin_'+id+'" placeholder="Enter SC PIN to proceed" style="max-width:220px" onkeydown="if(event.key===\'Enter\')checkInlinePin(\''+id+'\',\'sc\')">'+
+      '<button class="btn btn-bl" onclick="checkInlinePin(\''+id+'\',\'sc\')">Unlock &#128274;</button>'+
+      '</div>'+
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:6px">Supply Chain team only. Contact your administrator for the PIN.</div>'+
+      '</div>'+
+      '<div id="inlineSCForm_'+id+'" style="display:none">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">'+
+      '<div class="field"><label>Your Name <span class="req">*</span></label><input id="ils_name_'+id+'" placeholder="Full name"></div>'+
+      '<div class="field"><label>Your Email <span class="req">*</span></label><input type="email" id="ils_email_'+id+'" placeholder="you@company.com"></div>'+
+      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ils_bom_'+id+'"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option></select></div>'+
+      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ils_tool_'+id+'"><option value="">Select\u2026</option><option>Existing</option><option>New \u2013 Internal</option><option>New \u2013 External</option></select></div>'+
+      '<div class="field"><label>Impact to Other Orders <span class="req">*</span></label><input id="ils_impact_'+id+'" placeholder="Describe any impact"></div>'+
+      '<div class="field"><label>Lead Time <span class="req">*</span></label><input id="ils_lead_'+id+'" placeholder="e.g. 3\u20134 weeks"></div>'+
+      '</div>'+
+      '<div style="margin-bottom:0.75rem"><div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Supply Chain Decision <span class="req">*</span></div>'+
+      '<div class="rg" id="ils_dec_'+id+'">'+
+      '<label class="rb sel" onclick="ilsSelDec(this,\''+id+'\',\'Approved\')">&#10003; Approved</label>'+
+      '<label class="rb" onclick="ilsSelDec(this,\''+id+'\',\'Declined\')">&#10007; Declined</label>'+
+      '<label class="rb" onclick="ilsSelDec(this,\''+id+'\',\'Conditional\')">&#128203; Conditional</label>'+
+      '</div></div>'+
+      '<div class="field" style="margin-bottom:1rem"><label>Comments</label><textarea id="ils_comments_'+id+'" placeholder="Notes, conditions, concerns\u2026"></textarea></div>'+
+      '<button class="btn btn-gr" id="ils_submit_'+id+'" onclick="submitInlineSC(\''+id+'\')">&#10003; Submit Supply Chain Review</button>'+
+      '</div>'+
+      '</div>' : '')+
+
+    // Inline Mgmt Decision action panel (stage 3b only)
+    (data.stage==='3b'?
+      '<div id="inlineActionPanel" style="padding:1.4rem 1.6rem;border-top:2px solid #fbcfe8;background:#fdf2f8">'+
+      '<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9d174d;margin-bottom:1rem">&#128084; Management Decision — Process Inline</div>'+
+      '<div id="inlinePinGate_'+id+'">'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+      '<input type="password" id="inlinePin_'+id+'" placeholder="Enter Management PIN to proceed" style="max-width:240px" onkeydown="if(event.key===\'Enter\')checkInlinePin(\''+id+'\',\'mgmt\')">'+
+      '<button class="btn btn-bl" onclick="checkInlinePin(\''+id+'\',\'mgmt\')">Unlock &#128274;</button>'+
+      '</div>'+
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:6px">Management team only. Contact your administrator for the PIN.</div>'+
+      '</div>'+
+      '<div id="inlineMgmtForm_'+id+'" style="display:none">'+
+      '<div style="margin-bottom:0.75rem"><div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Decision <span class="req">*</span></div>'+
+      '<div class="rg" id="ilm_dec_'+id+'">'+
+      '<label class="rb sel" onclick="ilmSelDec(this,\''+id+'\',\'Approved\')">&#10003; Approved</label>'+
+      '<label class="rb" onclick="ilmSelDec(this,\''+id+'\',\'Declined\')">&#10007; Declined</label>'+
+      '<label class="rb" onclick="ilmSelDec(this,\''+id+'\',\'Modified Terms\')">&#128196; Modified Terms</label>'+
+      '</div></div>'+
+      '<div class="field" style="margin-bottom:1rem"><label>Comments <span class="req">*</span></label><textarea id="ilm_comments_'+id+'" placeholder="Your decision, reasoning, any conditions\u2026"></textarea></div>'+
+      '<button class="btn btn-gr" id="ilm_submit_'+id+'" onclick="submitInlineMgmt(\''+id+'\')">&#128084; Submit Management Decision</button>'+
+      '</div>'+
+      '</div>' : '')+
+
     '</div>';
 }
 
@@ -1246,6 +1300,77 @@ function closeDetail(){
   document.getElementById('appScreen').style.display='block';
   switchView('history');
   window.scrollTo(0,0);
+}
+
+// ── INLINE ACTION HELPERS ──
+const PINS = { sc: 'SC1234', mgmt: 'MG1234' };
+const _ilsDec = {}, _ilmDec = {};
+
+function checkInlinePin(id, role){
+  const pin = (document.getElementById('inlinePin_'+id)||{}).value||'';
+  if(pin !== PINS[role]){ toast('Incorrect PIN','warn'); return; }
+  document.getElementById('inlinePinGate_'+id).style.display='none';
+  const form = document.getElementById(role==='sc'?'inlineSCForm_'+id:'inlineMgmtForm_'+id);
+  if(form) form.style.display='block';
+  if(role==='sc') _ilsDec[id]='Approved';
+  if(role==='mgmt') _ilmDec[id]='Approved';
+}
+function ilsSelDec(el,id,v){
+  document.querySelectorAll('#ils_dec_'+id+' .rb').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); _ilsDec[id]=v;
+}
+function ilmSelDec(el,id,v){
+  document.querySelectorAll('#ilm_dec_'+id+' .rb').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); _ilmDec[id]=v;
+}
+
+async function submitInlineSC(id){
+  const nm=(document.getElementById('ils_name_'+id)||{}).value||'';
+  const em=(document.getElementById('ils_email_'+id)||{}).value||'';
+  const bom=(document.getElementById('ils_bom_'+id)||{}).value||'';
+  const tool=(document.getElementById('ils_tool_'+id)||{}).value||'';
+  const impact=(document.getElementById('ils_impact_'+id)||{}).value||'';
+  const lead=(document.getElementById('ils_lead_'+id)||{}).value||'';
+  const comments=(document.getElementById('ils_comments_'+id)||{}).value||'';
+  if(!nm){toast('Your name is required','warn');return;}
+  if(!em){toast('Your email is required','warn');return;}
+  if(!bom){toast('BOM Status required','warn');return;}
+  if(!tool){toast('Tooling Status required','warn');return;}
+  if(!impact){toast('Impact to Other Orders required','warn');return;}
+  if(!lead){toast('Lead Time required','warn');return;}
+  const btn=document.getElementById('ils_submit_'+id);
+  if(btn){btn.disabled=true;btn.innerHTML='<div class="spin"></div> Submitting\u2026';}
+  let data=SUPABASE?await dbLoad(id):null;
+  if(!data){toast('Could not load request','err');if(btn){btn.disabled=false;btn.innerHTML='&#10003; Submit Supply Chain Review';}return;}
+  S.formData=data.formData;
+  S.scData={scName:nm,scEmail:em,bomStatus:bom,toolingStatus:tool,orderImpact:impact,leadTime:lead,scDecision:_ilsDec[id]||'Approved',scComments:comments,reviewedAt:new Date().toLocaleString('en-GB')};
+  S.mgmtData=data.mgmtData||{};
+  S.escalationReason=data.escalationReason||'';
+  S.stage=3;
+  await persist();
+  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
+  toast('Supply Chain review submitted \u2014 requestor notified','ok');
+  closeDetail();
+  renderHistory();
+}
+
+async function submitInlineMgmt(id){
+  const comments=(document.getElementById('ilm_comments_'+id)||{}).value||'';
+  if(!comments.trim()){toast('Comments are required','warn');return;}
+  const btn=document.getElementById('ilm_submit_'+id);
+  if(btn){btn.disabled=true;btn.innerHTML='<div class="spin"></div> Submitting\u2026';}
+  let data=SUPABASE?await dbLoad(id):null;
+  if(!data){toast('Could not load request','err');if(btn){btn.disabled=false;btn.innerHTML='&#128084; Submit Management Decision';}return;}
+  S.formData=data.formData;
+  S.scData=data.scData||{};
+  S.mgmtData={mgmtDecision:_ilmDec[id]||'Approved',mgmtComments:comments.trim(),reviewedAt:new Date().toLocaleString('en-GB')};
+  S.escalationReason=data.escalationReason||'';
+  S.stage=4;
+  await persist();
+  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Management Decision',message_body:buildEmailMgmtDecision()});
+  toast('Management decision submitted \u2014 requestor notified','ok');
+  closeDetail();
+  renderHistory();
 }
 
 function pdfFilename(fd){
@@ -1537,13 +1662,24 @@ function copySQL(){
     if(CFG.pk) emailjs.init(CFG.pk);
   }
 
-  // Check for email action links: ?action=sc-review&id=... or ?action=mgmt-decision&id=...
-  const params = new URLSearchParams(window.location.search);
-  const action = params.get('action');
-  const urlId  = params.get('id');
+  // Parse URL — support both hash-based action links (#action=...&id=...) and query param (?id=...)
+  // Hash format is used for email action links (more reliable across email clients)
+  let action = null, urlId = null;
+  const hash = window.location.hash.replace(/^#/,'');
+  if(hash.includes('action=')){
+    const hp = new URLSearchParams(hash);
+    action = hp.get('action');
+    urlId  = hp.get('id');
+  }
+  // Also support legacy query string format
+  if(!action){
+    const params = new URLSearchParams(window.location.search);
+    action = params.get('action');
+    urlId  = urlId || params.get('id');
+  }
 
   if(action && urlId){
-    window.history.replaceState({},'',window.location.href.split('?')[0]);
+    window.history.replaceState({},'',window.location.pathname);
     await handleActionPage(urlId, action);
     return;
   }
@@ -1553,7 +1689,7 @@ function copySQL(){
 
   // If arriving with just ?id= (from SC review email → requestor clicks link)
   if(urlId){
-    window.history.replaceState({},'',window.location.href.split('?')[0]);
+    window.history.replaceState({},'',window.location.pathname);
     // Load the request and check if it needs action from the requestor (stage 3)
     let linked = SUPABASE ? await dbLoad(urlId) : null;
     if(!linked){
