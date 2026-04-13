@@ -350,7 +350,7 @@ const CFG = {
 // ═══════════════════════════════════════════════
 const S = {
   stage: 1,
-  radio: {orderType:'Live Order',repeatNpi:'Repeat',tooling:'No',expediteFee:'No'},
+  radio: {orderType:'Live Order',repeatNpi:'Repeat',tooling:'Existing',expediteFee:'No'},
   formData:{}, scData:{}, mgmtData:{}, escalationReason:'', attachment:null,
 };
 let SUPABASE = null;
@@ -707,8 +707,8 @@ async function handleActionPage(id, action){
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">'+
       '<div class="field"><label>Your Name <span class="req">*</span></label><input id="ac_scName" placeholder="Full name"></div>'+
       '<div class="field"><label>Your Email <span class="req">*</span></label><input type="email" id="ac_scEmail" placeholder="you@company.com"></div>'+
-      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ac_bom"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option></select></div>'+
-      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ac_tool"><option value="">Select\u2026</option><option>Existing</option><option>New \u2013 Internal</option><option>New \u2013 External</option></select></div>'+
+      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ac_bom"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option><option>Unknown</option></select></div>'+
+      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ac_tool"><option value="">Select\u2026</option><option>Existing</option><option>New/Mods \u2013 Internal</option><option>New/Mods \u2013 External</option></select></div>'+
       '<div class="field"><label>Impact to Other Orders <span class="req">*</span></label><input id="ac_impact" placeholder="Describe any impact"></div>'+
       '<div class="field"><label>Lead Time <span class="req">*</span></label><input id="ac_lead" placeholder="e.g. 3\u20134 weeks"></div>'+
       '</div>'+
@@ -924,7 +924,7 @@ function buildReqForm(ro){
     '<div class="field"><label>Quantity <span class="req">*</span></label><input id="f_qty" value="'+esc(fd.quantity||'')+'" '+r+' placeholder="e.g. 500"></div>'+
     '<div class="field"><label>Repeat / NPI</label><div class="rg" id="repeatNpi">'+['Repeat','NPI'].map(v=>'<label class="rb '+rc+' '+sel('repeatNpi',v)+'" onclick="selR(\'repeatNpi\',this,\''+v+'\')">'+v+'</label>').join('')+'</div></div></div>'+
     '<div class="frow">'+
-    '<div class="field"><label>Tooling</label><div class="rg" id="tooling">'+['No','Yes \u2013 New','Yes \u2013 Existing'].map(v=>'<label class="rb '+rc+' '+sel('tooling',v)+'" onclick="selR(\'tooling\',this,\''+v+'\')">'+v+'</label>').join('')+'</div></div></div>'+
+    '<div class="field"><label>Tooling</label><div class="rg" id="tooling">'+['Existing','New/Mods \u2013 Internal','New/Mods \u2013 External'].map(v=>'<label class="rb '+rc+' '+sel('tooling',v)+'" onclick="selR(\'tooling\',this,\''+v+'\')">'+v+'</label>').join('')+'</div></div></div>'+
     '<div class="divider"></div>'+
     '<div class="frow full"><div class="field"><label>Customer Requirements <span class="req">*</span></label><textarea id="f_creqs" '+r+' placeholder="What does the customer need and by when?">'+esc(fd.customerReqs||'')+'</textarea></div></div>'+
     '<div class="frow full"><div class="field"><label>RA Justification <span class="req">*</span></label><textarea id="f_just" '+r+' placeholder="Why should this be fast tracked?">'+esc(fd.raJustification||'')+'</textarea></div></div>'+
@@ -992,7 +992,7 @@ async function submitReq(){
     customerName:fv('f_cust'), location:fv('f_loc'),
     orderType:S.radio.orderType||'Live Order', sopNumber:fv('f_sop'),
     partNumber:fv('f_part'), partDescription:fv('f_desc'), quantity:fv('f_qty'),
-    repeatNpi:S.radio.repeatNpi||'Repeat', tooling:S.radio.tooling||'No',
+    repeatNpi:S.radio.repeatNpi||'Repeat', tooling:S.radio.tooling||'Existing',
     customerReqs:fv('f_creqs'), raJustification:fv('f_just'),
     expediteFee:S.radio.expediteFee||'No', expediteAmount:fv('f_expamt'),
   };
@@ -1240,8 +1240,8 @@ function buildDetailHTML(data, id){
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">'+
       '<div class="field"><label>Your Name <span class="req">*</span></label><input id="ils_name_'+id+'" placeholder="Full name"></div>'+
       '<div class="field"><label>Your Email <span class="req">*</span></label><input type="email" id="ils_email_'+id+'" placeholder="you@company.com"></div>'+
-      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ils_bom_'+id+'"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option></select></div>'+
-      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ils_tool_'+id+'"><option value="">Select\u2026</option><option>Existing</option><option>New \u2013 Internal</option><option>New \u2013 External</option></select></div>'+
+      '<div class="field"><label>BOM Status <span class="req">*</span></label><select id="ils_bom_'+id+'"><option value="">Select\u2026</option><option>Available in Stock</option><option>Not in Stock</option><option>Unknown</option></select></div>'+
+      '<div class="field"><label>Tooling Status <span class="req">*</span></label><select id="ils_tool_'+id+'"><option value="">Select\u2026</option><option>Existing</option><option>New/Mods \u2013 Internal</option><option>New/Mods \u2013 External</option></select></div>'+
       '<div class="field"><label>Impact to Other Orders <span class="req">*</span></label><input id="ils_impact_'+id+'" placeholder="Describe any impact"></div>'+
       '<div class="field"><label>Lead Time <span class="req">*</span></label><input id="ils_lead_'+id+'" placeholder="e.g. 3\u20134 weeks"></div>'+
       '</div>'+
