@@ -1574,6 +1574,8 @@ async function exportCSV(){
 // ═══════════════════════════════════════════════
 // ATTACHMENT
 // ═══════════════════════════════════════════════
+function fmtBytes(b){ if(b<1024)return b+'B'; if(b<1048576)return(b/1024).toFixed(1)+'KB'; return(b/1048576).toFixed(1)+'MB'; }
+
 function handleAttach(input){
   const file=input.files[0]; if(!file) return;
   if(file.size>10*1024*1024){toast('File too large \u2014 max 10MB','warn');input.value='';return;}
@@ -1757,15 +1759,4 @@ function copySQL(){
     S.formData = last;
     S.stage = isNaN(last.stage)?last.stage:Number(last.stage);
     S.scData = {scName:last.scName,scEmail:last.scEmail,bomStatus:last.bomStatus,toolingStatus:last.toolingStatus,orderImpact:last.orderImpact,leadTime:last.leadTime,scDecision:last.scDecision,scComments:last.scComments,reviewedAt:last.reviewedAt};
-    S.mgmtData = {mgmtDecision:last.mgmtDecision,mgmtComments:last.mgmtComments,reviewedAt:last.mgmtReviewedAt};
-    S.escalationReason = last.escalationReason||'';
-    if(last.expediteFee) S.radio.expediteFee=last.expediteFee;
-    if(last.orderType)   S.radio.orderType=last.orderType;
-  }
-
-  renderView();
-  switchView('history');
-})();
-</script>
-</body>
-</html>
+    S.mgmtData = {mgmtDecision:last.mgmtD
