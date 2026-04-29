@@ -341,7 +341,7 @@ const CFG = {
   svc:       'service_yvvqhwq',
   t1:        'template_6l6gwas',  // New request → Supply Chain
   t2:        'template_sg4j83f',  // All other notifications
-  scEmails:  'drafiq@rubberatkins.com,taran@rubberatkins.com',
+  scEmails:  'drafiq@rubberatkins.com',
   mgmtEmail: 'drafiq@rubberatkins.com',
 };
 
@@ -402,7 +402,7 @@ function stateToRecord(){
     repeatNpi:fd.repeatNpi, tooling:fd.tooling,
     customerReqs:fd.customerReqs, raJustification:fd.raJustification,
     expediteFee:fd.expediteFee, expediteAmount:fd.expediteAmount,
-    attachmentName:fd.attachmentName, attachmentSize:fd.attachmentSize, attachmentData:fd.attachmentData, attachmentTitle:fd.attachmentTitle,
+    attachmentName:fd.attachmentName, attachmentSize:fd.attachmentSize, attachmentUrl:fd.attachmentUrl, attachmentTitle:fd.attachmentTitle,
     scName:sc.scName, scEmail:sc.scEmail, bomStatus:sc.bomStatus, toolingStatus:sc.toolingStatus,
     orderImpact:sc.orderImpact, leadTime:sc.leadTime,
     scDecision:sc.scDecision, scComments:sc.scComments, reviewedAt:sc.reviewedAt,
@@ -446,7 +446,7 @@ async function dbSave(rec){
       repeat_npi:rec.repeatNpi, tooling:rec.tooling,
       customer_reqs:rec.customerReqs, ra_justification:rec.raJustification,
       expedite_fee:rec.expediteFee, expedite_amount:rec.expediteAmount,
-      attachment_title:rec.attachmentTitle,
+      attachment_name:rec.attachmentName||null, attachment_title:rec.attachmentTitle||null, attachment_url:rec.attachmentUrl||null,
       sc_name:rec.scName, sc_email:rec.scEmail,
       bom_status:rec.bomStatus, tooling_status:rec.toolingStatus,
       order_impact:rec.orderImpact, lead_time:rec.leadTime,
@@ -476,7 +476,7 @@ async function dbLoad(id){
         repeatNpi:data.repeat_npi, tooling:data.tooling,
         customerReqs:data.customer_reqs, raJustification:data.ra_justification,
         expediteFee:data.expedite_fee, expediteAmount:data.expedite_amount,
-        attachmentName:data.attachment_name, attachmentSize:data.attachment_size, attachmentData:data.attachment_data, attachmentTitle:data.attachment_title,
+        attachmentName:data.attachment_name, attachmentSize:data.attachment_size, attachmentUrl:data.attachment_url, attachmentTitle:data.attachment_title,
       },
       scData:{
         scName:data.sc_name, scEmail:data.sc_email,
@@ -957,7 +957,7 @@ function buildReqForm(ro){
         (fd.attachmentTitle?'<div style="font-size:0.72rem;color:var(--muted);margin-top:1px">'+esc(fd.attachmentTitle)+'</div>':'')+
         '</div>'+
         '<span style="font-size:0.72rem;color:var(--muted);flex-shrink:0">'+esc(fd.attachmentSize||'')+'</span>'+
-        (fd.attachmentData?'<button class="btn btn-ol" style="margin-left:4px;padding:3px 10px;font-size:0.72rem" onclick="downloadAttach()">&#8615; Download</button>':'')+
+        (fd.attachmentUrl?'<a href="'+fd.attachmentUrl+'" target="_blank" class="btn btn-ol" style="margin-left:4px;padding:3px 10px;font-size:0.72rem">&#128065; View</a>':'')+
         '</div></div></div>':''));
 }
 
@@ -999,8 +999,13 @@ async function submitReq(){
   if(S.attachment){
     S.formData.attachmentName=S.attachment.name;
     S.formData.attachmentSize=S.attachment.size;
-    S.formData.attachmentData=S.attachment.data;
     S.formData.attachmentTitle=fv('f_attachTitle')||'';
+    // Upload to Supabase Storage
+    if(S.attachment.file){
+      const url = await uploadAttachment(S.attachment.file, S.formData.id);
+      if(url){ S.formData.attachmentUrl=url; toast('File uploaded successfully','ok'); }
+      else toast('File could not be uploaded \u2014 request saved without attachment','warn');
+    }
   }
   S.stage=2;
   await persist();
@@ -1193,7 +1198,7 @@ function buildDetailHTML(data, id){
       '<div class="rl">Attached File'+(fd.attachmentTitle?' \u2014 '+esc(fd.attachmentTitle):'')+'</div>'+
       '<div class="rv">'+esc(fd.attachmentName)+(fd.attachmentSize?' <span style="font-size:0.72rem;font-weight:400;color:var(--muted)">('+esc(fd.attachmentSize)+')</span>':'')+'</div>'+
       '</div>'+
-      (fd.attachmentData?'<button class="btn btn-ol no-print" style="margin-left:auto;padding:3px 10px;font-size:0.72rem;flex-shrink:0" onclick="downloadAttach()">&#8615; Download</button>':'')+
+      (fd.attachmentUrl?'<a href="'+fd.attachmentUrl+'" target="_blank" class="btn btn-ol no-print" style="margin-left:auto;padding:3px 10px;font-size:0.72rem;flex-shrink:0">&#128065; View / Download</a>':'')+
       '</div>' : '')+
     '</div>'+
 
@@ -1571,21 +1576,17 @@ async function exportCSV(){
 // ═══════════════════════════════════════════════
 function handleAttach(input){
   const file=input.files[0]; if(!file) return;
-  if(file.size>5*1024*1024){toast('File too large \u2014 max 5MB','warn');input.value='';return;}
-  const reader=new FileReader();
-  reader.onload=e=>{
-    S.attachment={name:file.name,size:fmtBytes(file.size),data:e.target.result,type:file.type};
-    const p=document.getElementById('attachPreview');
-    if(p){
-      p.style.display='flex';
-      document.getElementById('attachIcon').textContent=/\.(jpg|jpeg|png|gif|heic)/i.test(file.name)?'\ud83d\uddbc':'\ud83d\udcc4';
-      document.getElementById('attachName').textContent=file.name;
-      document.getElementById('attachSize').textContent=fmtBytes(file.size);
-    }
-    const tw=document.getElementById('attachTitleWrap'); if(tw) tw.style.display='block';
-    toast('File attached: '+file.name,'ok');
-  };
-  reader.readAsDataURL(file);
+  if(file.size>10*1024*1024){toast('File too large \u2014 max 10MB','warn');input.value='';return;}
+  S.attachment={name:file.name,size:fmtBytes(file.size),file:file,type:file.type};
+  const p=document.getElementById('attachPreview');
+  if(p){
+    p.style.display='flex';
+    document.getElementById('attachIcon').textContent=/\.(jpg|jpeg|png|gif|heic)/i.test(file.name)?'\ud83d\uddbc':'\ud83d\udcc4';
+    document.getElementById('attachName').textContent=file.name;
+    document.getElementById('attachSize').textContent=fmtBytes(file.size);
+  }
+  const tw=document.getElementById('attachTitleWrap'); if(tw) tw.style.display='block';
+  toast('File ready: '+file.name,'ok');
 }
 function handleDrop(e){
   e.preventDefault();
@@ -1602,12 +1603,22 @@ function clearAttach(){
   const tw=document.getElementById('attachTitleWrap'); if(tw)tw.style.display='none';
   const ti=document.getElementById('f_attachTitle'); if(ti)ti.value='';
 }
-function fmtBytes(b){ if(b<1024)return b+'B'; if(b<1048576)return(b/1024).toFixed(1)+'KB'; return(b/1048576).toFixed(1)+'MB'; }
+async function uploadAttachment(file, requestId){
+  if(!SUPABASE || !file) return null;
+  try{
+    const ext = file.name.split('.').pop();
+    const path = requestId+'/'+Date.now()+'.'+ext;
+    const{data, error} = await SUPABASE.storage.from('attachments').upload(path, file, {cacheControl:'3600',upsert:false});
+    if(error){ console.warn('Upload failed',error); return null; }
+    const{data:urlData} = SUPABASE.storage.from('attachments').getPublicUrl(path);
+    return urlData.publicUrl||null;
+  }catch(e){ console.warn('Upload error',e); return null; }
+}
 let _detailFd = null; // cached formData for detail page download
 function downloadAttach(){
-  const fd = (S.formData && S.formData.attachmentData) ? S.formData : (_detailFd && _detailFd.attachmentData ? _detailFd : null);
-  if(!fd) return;
-  const a=document.createElement('a'); a.href=fd.attachmentData; a.download=fd.attachmentName||'attachment'; a.click();
+  const fd = (S.formData && S.formData.attachmentUrl) ? S.formData : (_detailFd && _detailFd.attachmentUrl ? _detailFd : null);
+  if(!fd||!fd.attachmentUrl) return;
+  window.open(fd.attachmentUrl, '_blank');
 }
 
 // ═══════════════════════════════════════════════
