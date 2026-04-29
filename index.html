@@ -1759,4 +1759,15 @@ function copySQL(){
     S.formData = last;
     S.stage = isNaN(last.stage)?last.stage:Number(last.stage);
     S.scData = {scName:last.scName,scEmail:last.scEmail,bomStatus:last.bomStatus,toolingStatus:last.toolingStatus,orderImpact:last.orderImpact,leadTime:last.leadTime,scDecision:last.scDecision,scComments:last.scComments,reviewedAt:last.reviewedAt};
-    S.mgmtData = {mgmtDecision:last.mgmtD
+    S.mgmtData = {mgmtDecision:last.mgmtDecision,mgmtComments:last.mgmtComments,reviewedAt:last.mgmtReviewedAt};
+    S.escalationReason = last.escalationReason||'';
+    if(last.expediteFee) S.radio.expediteFee=last.expediteFee;
+    if(last.orderType)   S.radio.orderType=last.orderType;
+  }
+
+  renderView();
+  switchView('history');
+})();
+</script>
+</body>
+</html>
