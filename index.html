@@ -938,8 +938,8 @@ function buildReqForm(ro){
       '<div id="attachZone" onclick="document.getElementById(\'f_attach\').click()" ondragover="event.preventDefault();this.style.borderColor=\'var(--blue)\'" ondragleave="this.style.borderColor=\'var(--border)\'" ondrop="handleDrop(event)" style="border:2px dashed var(--border);border-radius:8px;padding:1.25rem;text-align:center;cursor:pointer;transition:border-color 0.15s;background:var(--s2)">'+
       '<div style="font-size:1.4rem;margin-bottom:4px">&#128206;</div>'+
       '<div style="font-size:0.8rem;font-weight:600">Click to attach or drag &amp; drop</div>'+
-      '<div style="font-size:0.7rem;color:var(--muted);margin-top:2px">JPG, PNG, PDF up to 5MB</div>'+
-      '<input type="file" id="f_attach" accept="image/*,.pdf" style="display:none" onchange="handleAttach(this)"></div>'+
+      '<div style="font-size:0.7rem;color:var(--muted);margin-top:2px">Any file type up to 10MB</div>'+
+      '<input type="file" id="f_attach" style="display:none" onchange="handleAttach(this)"></div>'+
       '<div id="attachPreview" style="display:none;margin-top:0.5rem;padding:0.6rem 0.85rem;background:#fff;border:1px solid var(--border);border-radius:7px;align-items:center;gap:10px;font-size:0.8rem">'+
       '<span id="attachIcon" style="font-size:1.1rem;flex-shrink:0">&#128196;</span>'+
       '<span id="attachName" style="flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>'+
@@ -1581,7 +1581,12 @@ function handleAttach(input){
   const p=document.getElementById('attachPreview');
   if(p){
     p.style.display='flex';
-    document.getElementById('attachIcon').textContent=/\.(jpg|jpeg|png|gif|heic)/i.test(file.name)?'\ud83d\uddbc':'\ud83d\udcc4';
+    const ico = /\.(jpg|jpeg|png|gif|heic|webp)/i.test(file.name)?'🖼':
+                /\.(pdf)/i.test(file.name)?'📄':
+                /\.(doc|docx)/i.test(file.name)?'📝':
+                /\.(xls|xlsx)/i.test(file.name)?'📊':
+                /\.(msg|eml)/i.test(file.name)?'📧':'📎';
+    document.getElementById('attachIcon').textContent=ico;
     document.getElementById('attachName').textContent=file.name;
     document.getElementById('attachSize').textContent=fmtBytes(file.size);
   }
