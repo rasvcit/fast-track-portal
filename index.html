@@ -409,7 +409,7 @@ function stateToRecord(){
     escalationReason:S.escalationReason,
     mgmtDecision:mg.mgmtDecision, mgmtComments:mg.mgmtComments, mgmtReviewedAt:mg.reviewedAt,
     stage:String(st),
-    status: st===4 ? (mg.mgmtDecision ? 'Complete \u2014 '+mg.mgmtDecision : 'Closed \u2014 Accepted')
+    status: st===4 ? (mg.mgmtDecision ? 'Complete - '+mg.mgmtDecision : 'Closed - Accepted')
            : st==='3b' ? 'Escalated to Management'
            : st===3   ? 'Awaiting Requestor Decision'
            : st===2   ? 'Awaiting Supply Chain Review' : 'Draft',
@@ -527,7 +527,7 @@ async function persist(){ if(S.formData&&S.formData.id) await dbSave(stateToReco
 async function sendEmail(tid, params){
   if(!CFG.pk||!CFG.svc||!tid) return false;
   try{ await emailjs.send(CFG.svc, tid, params); return true; }
-  catch(e){ console.warn('Email failed',e); toast('Email notification failed \u2014 check EmailJS settings','warn'); return false; }
+  catch(e){ console.warn('Email failed',e); toast('Email notification failed - check EmailJS settings','warn'); return false; }
 }
 
 // Build combined to+cc address for EmailJS (comma-separated)
@@ -542,7 +542,7 @@ function portalUrl(id, action){
 }
 function emailWrap(icon, title, intro, tableRows, boxes, actionNote, btnLabel, btnUrl){
   const url = btnUrl||portalUrl();
-  const hdr = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111"><div style="background:#0f0f0e;padding:20px 24px;border-radius:8px 8px 0 0"><div style="font-size:1.3rem;font-weight:800;color:#fff">RA</div><div style="font-size:0.7rem;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase">Rubberatkins \u2014 Fast Track Portal</div></div><div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px">';
+  const hdr = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111"><div style="background:#0f0f0e;padding:20px 24px;border-radius:8px 8px 0 0"><div style="font-size:1.3rem;font-weight:800;color:#fff">RA</div><div style="font-size:0.7rem;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase">Rubberatkins - Fast Track Portal</div></div><div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px">';
   const heading = '<h2 style="font-size:1rem;margin-bottom:6px">'+icon+' '+title+'</h2><p style="font-size:0.85rem;color:#555;margin-bottom:18px">'+intro+'</p>';
   const table = '<table style="width:100%;border-collapse:collapse">'+tableRows.map(([l,v])=>'<tr><td style="padding:6px 10px;background:#f8f8f8;font-weight:600;width:40%;border:1px solid #e5e7eb;font-size:0.82rem">'+l+'</td><td style="padding:6px 10px;border:1px solid #e5e7eb;font-size:0.82rem">'+v+'</td></tr>').join('')+'</table>';
   const boxHtml = (boxes||[]).map(b=>'<div style="margin-top:12px;background:'+b.bg+';border:1px solid '+b.border+';border-radius:6px;padding:12px 14px"><div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:'+b.color+';margin-bottom:4px">'+b.label+'</div><div style="font-size:0.82rem;color:#111">'+b.value+'</div></div>').join('');
@@ -559,8 +559,8 @@ function buildEmailNewRequest(){
     [['Requestor',fd.requestorName],['Email',fd.requestorEmail],['Customer',fd.customerName],
      ['Part Number',fd.partNumber],['Description',fd.partDescription],['Quantity',fd.quantity],
      ['Order Type',fd.orderType],['Quote / SOP',fd.sopNumber],['Submitted',fd.submittedAt],['Request ID',fd.id]],
-    [{bg:'#fffbeb',border:'#fde68a',color:'#92400e',label:'Customer Requirements',value:fd.customerReqs||'\u2014'},
-     {bg:'#eff6ff',border:'#bfdbfe',color:'#1e40af',label:'RA Justification',value:fd.raJustification||'\u2014'}],
+    [{bg:'#fffbeb',border:'#fde68a',color:'#92400e',label:'Customer Requirements',value:fd.customerReqs||'-'},
+     {bg:'#eff6ff',border:'#bfdbfe',color:'#1e40af',label:'RA Justification',value:fd.raJustification||'-'}],
     'Click the button below to open the Supply Chain review form for this request.',
     'Open Supply Chain Review Form',
     portalUrl(fd.id,'sc-review'));
@@ -573,13 +573,13 @@ function buildEmailSCReview(){
     [['Requestor',fd.requestorName],['Customer',fd.customerName],['Part Number',fd.partNumber],
      ['Description',fd.partDescription],['Quantity',fd.quantity],['Order Type',fd.orderType],
      ['Location',fd.location],['Quote / SOP',fd.sopNumber],['Tooling',fd.tooling],
-     ['Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No'],
-     ['\u2014 Supply Chain: Reviewed By',sc.scName],
+     ['Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No'],
+     ['- Supply Chain: Reviewed By',sc.scName],
      ['Supply Chain Decision','<strong>'+sc.scDecision+'</strong>'],
      ['Lead Time',sc.leadTime],['BOM Status',sc.bomStatus],['Tooling Status',sc.toolingStatus],
      ['Impact to Other Orders',sc.orderImpact],['Reviewed At',sc.reviewedAt],['Request ID',fd.id]],
-    [{bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'Customer Requirements',value:fd.customerReqs||'\u2014'},
-     {bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'RA Justification',value:fd.raJustification||'\u2014'},
+    [{bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'Customer Requirements',value:fd.customerReqs||'-'},
+     {bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'RA Justification',value:fd.raJustification||'-'},
      {bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'Supply Chain Comments',value:sc.scComments||'None'}],
     'Open the portal to view the full decision. You can accept or escalate to management.',
     'View Decision &amp; Respond',
@@ -595,14 +595,14 @@ function buildEmailEscalation(reason){
      ['Part Number',fd.partNumber],['Description',fd.partDescription],
      ['Quantity',fd.quantity],['Order Type',fd.orderType],
      ['Quote / SOP',fd.sopNumber],['Tooling',fd.tooling],
-     ['Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No'],
-     ['\u2014 Supply Chain: Reviewed By',sc.scName],
+     ['Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No'],
+     ['- Supply Chain: Reviewed By',sc.scName],
      ['Supply Chain Decision','<strong>'+sc.scDecision+'</strong>'],
      ['Lead Time',sc.leadTime],['BOM Status',sc.bomStatus],['Tooling Status',sc.toolingStatus],
      ['Impact to Other Orders',sc.orderImpact],['Supply Chain Comments',sc.scComments||'None'],
      ['Request ID',fd.id]],
-    [{bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'Customer Requirements',value:fd.customerReqs||'\u2014'},
-     {bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'RA Justification',value:fd.raJustification||'\u2014'},
+    [{bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'Customer Requirements',value:fd.customerReqs||'-'},
+     {bg:'#f7f7f5',border:'#e2e2de',color:'#6b6b65',label:'RA Justification',value:fd.raJustification||'-'},
      {bg:'#fee2e2',border:'#fecaca',color:'#991b1b',label:'Reason for Escalation',value:reason}],
     'Click the button below to open the management decision form. You will see all full details on that page.',
     'Open Management Decision Form',
@@ -684,29 +684,29 @@ async function handleActionPage(id, action){
   if(action === 'sc-review'){
     if(data.stage !== 2){ box.innerHTML = alreadyDoneBox(fd,'Supply Chain review has already been submitted for this request.'); return; }
     _acScDec = 'Approved';
-    const ri2=(l,v)=>'<div class="ri"><div class="rl">'+l+'</div><div class="rv">'+esc(String(v||'\u2014'))+'</div></div>';
+    const ri2=(l,v)=>'<div class="ri"><div class="rl">'+l+'</div><div class="rv">'+esc(String(v||'-'))+'</div></div>';
     box.innerHTML = actionHeader('Supply Chain Review')+
       '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.8rem;color:#1e40af">'+
-      '&#128269; <strong>Supply Chain Review Required:</strong> '+esc(fd.partNumber)+' \u2014 '+esc(fd.customerName)+' &nbsp;\u00b7&nbsp; ID: '+esc(fd.id)+'</div>'+
+      '&#128269; <strong>Supply Chain Review Required:</strong> '+esc(fd.partNumber)+' - '+esc(fd.customerName)+' &nbsp;\u00b7&nbsp; ID: '+esc(fd.id)+'</div>'+
 
       // Full requestor details
       '<div style="background:#f7f7f5;border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:1.25rem">'+
-      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128203; Section 1 \u2014 Request Details</div>'+
+      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128203; Section 1 - Request Details</div>'+
       '<div class="rgrid" style="margin-bottom:0.6rem">'+
       ri2('Requestor',fd.requestorName)+ri2('Email',fd.requestorEmail)+
       ri2('Customer',fd.customerName)+ri2('Location',fd.location)+
       ri2('Part Number',fd.partNumber)+ri2('Description',fd.partDescription)+
       ri2('Quantity',fd.quantity)+ri2('Order Type',fd.orderType)+
       ri2('Quote / SOP',fd.sopNumber)+ri2('Repeat / NPI',fd.repeatNpi)+
-      ri2('Tooling',fd.tooling)+ri2('Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No')+
+      ri2('Tooling',fd.tooling)+ri2('Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No')+
       '</div>'+
-      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'\u2014')+'</div></div>'+
-      '<div class="ri"><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'\u2014')+'</div></div>'+
-      (fd.attachmentName?'<div class="ri" style="margin-top:0.5rem;display:flex;align-items:center;gap:9px"><span style="font-size:1.1rem">'+(/\.(jpg|jpeg|png|gif|heic)/i.test(fd.attachmentName)?'&#128444;':'&#128196;')+'</span><div style="flex:1;min-width:0"><div class="rl">Attached File'+(fd.attachmentTitle?' \u2014 '+esc(fd.attachmentTitle):'')+'</div><div class="rv">'+esc(fd.attachmentName)+'</div></div></div>':'')+
+      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'-')+'</div></div>'+
+      '<div class="ri"><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'-')+'</div></div>'+
+      (fd.attachmentName?'<div class="ri" style="margin-top:0.5rem;display:flex;align-items:center;gap:9px"><span style="font-size:1.1rem">'+(/\.(jpg|jpeg|png|gif|heic)/i.test(fd.attachmentName)?'&#128444;':'&#128196;')+'</span><div style="flex:1;min-width:0"><div class="rl">Attached File'+(fd.attachmentTitle?' - '+esc(fd.attachmentTitle):'')+'</div><div class="rv">'+esc(fd.attachmentName)+'</div></div></div>':'')+
       '</div>'+
 
       // SC review form
-      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128269; Section 2 \u2014 Your Supply Chain Review</div>'+
+      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128269; Section 2 - Your Supply Chain Review</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">'+
       '<div class="field"><label>Your Name <span class="req">*</span></label><input id="ac_scName" placeholder="Full name"></div>'+
       '<div class="field"><label>Your Email <span class="req">*</span></label><input type="email" id="ac_scEmail" placeholder="you@company.com"></div>'+
@@ -731,37 +731,37 @@ async function handleActionPage(id, action){
   if(action === 'mgmt-decision'){
     if(data.stage !== '3b'){ box.innerHTML = alreadyDoneBox(fd,'Management decision has already been submitted for this request.'); return; }
     _acMgDec = 'Approved';
-    const ri2=(l,v)=>'<div class="ri"><div class="rl">'+l+'</div><div class="rv">'+esc(String(v||'\u2014'))+'</div></div>';
+    const ri2=(l,v)=>'<div class="ri"><div class="rl">'+l+'</div><div class="rv">'+esc(String(v||'-'))+'</div></div>';
     const decCol = d=>d==='Approved'?'var(--ok)':d==='Declined'?'var(--err)':'var(--accent)';
     box.innerHTML = actionHeader('Management Decision')+
       '<div style="background:#fce7f3;border:1px solid #fbcfe8;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.8rem;color:#9d174d">'+
-      '&#11014; <strong>Escalated \u2014 Management Decision Required:</strong> '+esc(fd.partNumber)+' \u2014 '+esc(fd.customerName)+' &nbsp;\u00b7&nbsp; ID: '+esc(fd.id)+'</div>'+
+      '&#11014; <strong>Escalated - Management Decision Required:</strong> '+esc(fd.partNumber)+' - '+esc(fd.customerName)+' &nbsp;\u00b7&nbsp; ID: '+esc(fd.id)+'</div>'+
 
       // Full requestor details
       '<div style="background:#f7f7f5;border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:1rem">'+
-      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128203; Section 1 \u2014 Original Request</div>'+
+      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128203; Section 1 - Original Request</div>'+
       '<div class="rgrid" style="margin-bottom:0.6rem">'+
       ri2('Requestor',fd.requestorName)+ri2('Email',fd.requestorEmail)+
       ri2('Customer',fd.customerName)+ri2('Location',fd.location)+
       ri2('Part Number',fd.partNumber)+ri2('Description',fd.partDescription)+
       ri2('Quantity',fd.quantity)+ri2('Order Type',fd.orderType)+
       ri2('Quote / SOP',fd.sopNumber)+ri2('Repeat / NPI',fd.repeatNpi)+
-      ri2('Tooling',fd.tooling)+ri2('Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No')+
+      ri2('Tooling',fd.tooling)+ri2('Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No')+
       '</div>'+
-      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'\u2014')+'</div></div>'+
-      '<div class="ri"><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'\u2014')+'</div></div>'+
-      (fd.attachmentName?'<div class="ri" style="margin-top:0.5rem;display:flex;align-items:center;gap:9px"><span style="font-size:1.1rem">'+(/\.(jpg|jpeg|png|gif|heic)/i.test(fd.attachmentName)?'&#128444;':'&#128196;')+'</span><div style="flex:1;min-width:0"><div class="rl">Attached File'+(fd.attachmentTitle?' \u2014 '+esc(fd.attachmentTitle):'')+'</div><div class="rv">'+esc(fd.attachmentName)+'</div></div></div>':'')+
+      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'-')+'</div></div>'+
+      '<div class="ri"><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'-')+'</div></div>'+
+      (fd.attachmentName?'<div class="ri" style="margin-top:0.5rem;display:flex;align-items:center;gap:9px"><span style="font-size:1.1rem">'+(/\.(jpg|jpeg|png|gif|heic)/i.test(fd.attachmentName)?'&#128444;':'&#128196;')+'</span><div style="flex:1;min-width:0"><div class="rl">Attached File'+(fd.attachmentTitle?' - '+esc(fd.attachmentTitle):'')+'</div><div class="rv">'+esc(fd.attachmentName)+'</div></div></div>':'')+
       '</div>'+
 
       // Supply Chain review details
       '<div style="background:#f7f7f5;border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:1rem">'+
-      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128269; Section 2 \u2014 Supply Chain Review</div>'+
+      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128269; Section 2 - Supply Chain Review</div>'+
       '<div class="rgrid" style="margin-bottom:0.6rem">'+
       ri2('Reviewed By',sc.scName)+ri2('Reviewed At',sc.reviewedAt)+
       ri2('BOM Status',sc.bomStatus)+ri2('Tooling Status',sc.toolingStatus)+
       ri2('Impact to Other Orders',sc.orderImpact)+ri2('Lead Time',sc.leadTime)+
       '</div>'+
-      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Supply Chain Decision</div><div class="rv" style="font-weight:700;color:'+decCol(sc.scDecision)+'">'+esc(sc.scDecision||'\u2014')+'</div></div>'+
+      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Supply Chain Decision</div><div class="rv" style="font-weight:700;color:'+decCol(sc.scDecision)+'">'+esc(sc.scDecision||'-')+'</div></div>'+
       (sc.scComments?'<div class="ri"><div class="rl">Supply Chain Comments</div><div class="rv">'+esc(sc.scComments)+'</div></div>':'')+
       '</div>'+
 
@@ -772,7 +772,7 @@ async function handleActionPage(id, action){
         '<div style="font-size:0.85rem">'+esc(data.escalationReason)+'</div></div>':'')+
 
       // Management form
-      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128084; Section 3 \u2014 Your Management Decision</div>'+
+      '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)">&#128084; Section 3 - Your Management Decision</div>'+
       '<div style="margin-bottom:0.75rem"><div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Decision <span class="req">*</span></div>'+
       '<div class="rg" id="ac_mgdec">'+
       '<label class="rb sel" onclick="acSelMg(this,\'Approved\')">&#10003; Approved</label>'+
@@ -813,7 +813,7 @@ async function submitActionSC(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=3;
   await persist();
-  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update - '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
 
   document.getElementById('actionBox').innerHTML=
     '<div style="text-align:center;padding:2rem">'+
@@ -840,7 +840,7 @@ async function submitActionMgmt(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=4;
   await persist();
-  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track \u2014 Management Decision for '+S.formData.partNumber,message_body:buildEmailMgmtDecision()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track - Management Decision for '+S.formData.partNumber,message_body:buildEmailMgmtDecision()});
 
   document.getElementById('actionBox').innerHTML=
     '<div style="text-align:center;padding:2rem">'+
@@ -900,7 +900,7 @@ function renderView(){
     document.getElementById('panel2').classList.add('show');
     const mg=S.mgmtData||{};
     document.getElementById('doneIcon').textContent = mg.mgmtDecision==='Declined' ? '\u274c' : '\u2705';
-    document.getElementById('doneTitle').textContent = mg.mgmtDecision ? 'Management Decision: '+mg.mgmtDecision : 'Request Closed \u2014 Accepted';
+    document.getElementById('doneTitle').textContent = mg.mgmtDecision ? 'Management Decision: '+mg.mgmtDecision : 'Request Closed - Accepted';
     document.getElementById('doneSub').textContent = mg.mgmtComments || 'The fast track request has been processed and closed.';
     document.getElementById('panel4').classList.add('show');
   }
@@ -910,7 +910,7 @@ function buildReqForm(ro){
   const fd=S.formData, r=ro?'readonly':'', rc=ro?'ro':'';
   const sel=(g,v)=>(S.radio[g]||'')=== v?'sel':'';
   document.getElementById('p1body').innerHTML=
-    (ro?'<div class="ro-notice">&#128203; Read-only \u2014 this request has been submitted</div>':'')+
+    (ro?'<div class="ro-notice">&#128203; Read-only - this request has been submitted</div>':'')+
     '<div class="frow">'+
     '<div class="field"><label>Your Name <span class="req">*</span></label><input id="f_name" value="'+esc(fd.requestorName||'')+'" '+r+' placeholder="Full name"></div>'+
     '<div class="field"><label>Your Email <span class="req">*</span></label><input id="f_email" type="email" value="'+esc(fd.requestorEmail||'')+'" '+r+' placeholder="you@company.com"></div></div>'+
@@ -974,7 +974,7 @@ function buildSCReview(){
     gRows([['Reviewed By',sc.scName],['Reviewed At',sc.reviewedAt],['BOM Status',sc.bomStatus],['Tooling Status',sc.toolingStatus],['Impact to Other Orders',sc.orderImpact],['Lead Time',sc.leadTime]])+
     '</div>'+
     '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Supply Chain Decision</div>'+
-    '<div class="rv" style="font-weight:700;color:'+(sc.scDecision==='Approved'?'var(--ok)':sc.scDecision==='Declined'?'var(--err)':'var(--accent)')+'">'+esc(sc.scDecision||'\u2014')+'</div></div>'+
+    '<div class="rv" style="font-weight:700;color:'+(sc.scDecision==='Approved'?'var(--ok)':sc.scDecision==='Declined'?'var(--err)':'var(--accent)')+'">'+esc(sc.scDecision||'-')+'</div></div>'+
     (sc.scComments?'<div class="ri"><div class="rl">Supply Chain Comments</div><div class="rv">'+esc(sc.scComments)+'</div></div>':'');
 }
 
@@ -1010,18 +1010,18 @@ async function submitReq(){
     if(S.attachment.file){
       const url = await uploadAttachment(S.attachment.file, S.formData.id);
       if(url){ S.formData.attachmentUrl=url; toast('File uploaded successfully','ok'); }
-      else toast('File could not be uploaded \u2014 request saved without attachment','warn');
+      else toast('File could not be uploaded - request saved without attachment','warn');
     }
   }
   S.stage=2;
   await persist();
   await sendEmail(CFG.t1,{
     to_email:CFG.scEmails,
-    subject:'New Fast Track Request \u2014 '+S.formData.customerName+' / '+S.formData.partNumber,
+    subject:'New Fast Track Request - '+S.formData.customerName+' | '+S.formData.partNumber,
     message_body:buildEmailNewRequest(),
   });
   renderView();
-  toast('Request '+S.formData.id+' submitted \u2014 Supply Chain team notified','ok');
+  toast('Request '+S.formData.id+' submitted - Supply Chain team notified','ok');
 }
 
 async function submitEsc(){
@@ -1031,7 +1031,7 @@ async function submitEsc(){
   await persist();
   await sendEmail(CFG.t2,{
     to_email:CFG.mgmtEmail,
-    subject:'Fast Track Escalated \u2014 '+S.formData.partNumber,
+    subject:'Fast Track Escalated - '+S.formData.partNumber,
     message_body:buildEmailEscalation(reason),
   });
   renderView();
@@ -1141,27 +1141,27 @@ function renderHistoryRows(h){
     return '<span class="sts '+cls+'">'+(r.status||lbl)+'</span>';
   };
   const scDec=r=>{
-    if(!r.scDecision) return '<span style="color:var(--muted);font-size:0.75rem">\u2014</span>';
+    if(!r.scDecision) return '<span style="color:var(--muted);font-size:0.75rem">-</span>';
     const cls=r.scDecision==='Approved'?'sts-ok':r.scDecision==='Declined'?'sts-no':'sts-cond';
     return '<span class="sts '+cls+'">'+esc(r.scDecision)+'</span>';
   };
   const mgReview=r=>{
     if(r.mgmtDecision||r.mgmtReviewedAt) return '<span class="sts sts-ok">Yes</span>';
     if(r.stageCode==='3b') return '<span class="sts sts-1">Pending</span>';
-    return '<span style="color:var(--muted);font-size:0.75rem">\u2014</span>';
+    return '<span style="color:var(--muted);font-size:0.75rem">-</span>';
   };
   const mgDec=r=>{
-    if(!r.mgmtDecision) return '<span style="color:var(--muted);font-size:0.75rem">\u2014</span>';
+    if(!r.mgmtDecision) return '<span style="color:var(--muted);font-size:0.75rem">-</span>';
     const cls=r.mgmtDecision==='Approved'?'sts-ok':r.mgmtDecision==='Declined'?'sts-no':'sts-2';
     return '<span class="sts '+cls+'">'+esc(r.mgmtDecision)+'</span>';
   };
   tbody.innerHTML=sorted.map(r=>
     '<tr onclick="openDetail(\''+r.id+'\')" title="Click to view full details">'+
-    '<td style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">'+(r.submittedAt||'\u2014')+'</td>'+
-    '<td style="font-weight:600">'+esc(r.requestorName||'\u2014')+'</td>'+
-    '<td>'+esc(r.customerName||'\u2014')+'</td>'+
-    '<td style="font-family:var(--mono);font-size:0.75rem">'+esc(r.partNumber||'\u2014')+'</td>'+
-    '<td style="font-family:var(--mono);font-size:0.75rem;color:var(--muted)">'+esc(r.sopNumber||'\u2014')+'</td>'+
+    '<td style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">'+(r.submittedAt||'-')+'</td>'+
+    '<td style="font-weight:600">'+esc(r.requestorName||'-')+'</td>'+
+    '<td>'+esc(r.customerName||'-')+'</td>'+
+    '<td style="font-family:var(--mono);font-size:0.75rem">'+esc(r.partNumber||'-')+'</td>'+
+    '<td style="font-family:var(--mono);font-size:0.75rem;color:var(--muted)">'+esc(r.sopNumber||'-')+'</td>'+
     '<td>'+stsBadge(r)+'</td>'+
     '<td>'+scDec(r)+'</td>'+
     '<td>'+mgReview(r)+'</td>'+
@@ -1175,33 +1175,33 @@ function renderHistoryRows(h){
 // ═══════════════════════════════════════════════
 function buildDetailHTML(data, id){
   const fd=data.formData||{}, sc=data.scData||{}, mg=data.mgmtData||{}, er=data.escalationReason||'';
-  const statusMap={1:'Draft',2:'Awaiting Supply Chain Review',3:'Awaiting Requestor Decision','3b':'Escalated to Management',4:mg.mgmtDecision?'Complete \u2014 '+mg.mgmtDecision:'Closed \u2014 Accepted'};
+  const statusMap={1:'Draft',2:'Awaiting Supply Chain Review',3:'Awaiting Requestor Decision','3b':'Escalated to Management',4:mg.mgmtDecision?'Complete - '+mg.mgmtDecision:'Closed - Accepted'};
   const decColor = d => d==='Approved'?'var(--ok)':d==='Declined'?'var(--err)':'var(--accent)';
   return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.05)">'+
 
     // Header
     '<div style="padding:1.25rem 1.6rem;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">'+
-    '<div><div style="font-size:1.05rem;font-weight:700">'+esc(fd.partNumber||'Request')+' \u2014 '+esc(fd.customerName||'')+'</div>'+
+    '<div><div style="font-size:1.05rem;font-weight:700">'+esc(fd.partNumber||'Request')+' - '+esc(fd.customerName||'')+'</div>'+
     '<div style="font-size:0.72rem;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">'+
     '<span>&#128196; '+esc(fd.id||'')+'</span>'+
-    '<span>&middot;</span><span>Submitted: '+esc(fd.submittedAt||'\u2014')+'</span>'+
+    '<span>&middot;</span><span>Submitted: '+esc(fd.submittedAt||'-')+'</span>'+
     '<span>&middot;</span><span>Status: <strong>'+esc(statusMap[data.stage]||String(data.stage))+'</strong></span>'+
     '</div></div>'+
     '<button class="btn btn-bl no-print" onclick="downloadPDF(\''+id+'\')">&#128424; Download PDF</button></div>'+
 
     // Section 1 — Request Details
     '<div style="padding:1.4rem 1.6rem">'+
-    '<div class="det-sec" style="margin-top:0">Section 1 \u2014 Request Details</div>'+
+    '<div class="det-sec" style="margin-top:0">Section 1 - Request Details</div>'+
     '<div class="rgrid" style="margin-bottom:0.6rem">'+
-    gRows([['Requestor',fd.requestorName],['Email',fd.requestorEmail],['CC',fd.ccEmails||'\u2014'],['Customer',fd.customerName],['Location',fd.location],['Part Number',fd.partNumber],['Description',fd.partDescription],['Quantity',fd.quantity],['Order Type',fd.orderType],['Quote / SOP',fd.sopNumber],['Repeat / NPI',fd.repeatNpi],['Tooling',fd.tooling],['Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No']])+
+    gRows([['Requestor',fd.requestorName],['Email',fd.requestorEmail],['CC',fd.ccEmails||'-'],['Customer',fd.customerName],['Location',fd.location],['Part Number',fd.partNumber],['Description',fd.partDescription],['Quantity',fd.quantity],['Order Type',fd.orderType],['Quote / SOP',fd.sopNumber],['Repeat / NPI',fd.repeatNpi],['Tooling',fd.tooling],['Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No']])+
     '</div>'+
-    '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'\u2014')+'</div></div>'+
-    '<div class="ri"'+(fd.attachmentName?'':' style="margin-bottom:0"')+'><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'\u2014')+'</div></div>'+
+    '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'-')+'</div></div>'+
+    '<div class="ri"'+(fd.attachmentName?'':' style="margin-bottom:0"')+'><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'-')+'</div></div>'+
     (fd.attachmentName?
       '<div class="ri" style="margin-top:0.5rem;display:flex;align-items:center;gap:9px">'+
       '<span style="font-size:1.1rem;flex-shrink:0">'+(/\.(jpg|jpeg|png|gif|heic)/i.test(fd.attachmentName)?'&#128444;':'&#128196;')+'</span>'+
       '<div style="flex:1;min-width:0">'+
-      '<div class="rl">Attached File'+(fd.attachmentTitle?' \u2014 '+esc(fd.attachmentTitle):'')+'</div>'+
+      '<div class="rl">Attached File'+(fd.attachmentTitle?' - '+esc(fd.attachmentTitle):'')+'</div>'+
       '<div class="rv">'+esc(fd.attachmentName)+(fd.attachmentSize?' <span style="font-size:0.72rem;font-weight:400;color:var(--muted)">('+esc(fd.attachmentSize)+')</span>':'')+'</div>'+
       '</div>'+
       (fd.attachmentUrl?'<a href="'+fd.attachmentUrl+'" target="_blank" class="btn btn-ol no-print" style="margin-left:auto;padding:3px 10px;font-size:0.72rem;flex-shrink:0">&#128065; View / Download</a>':'')+
@@ -1211,27 +1211,27 @@ function buildDetailHTML(data, id){
     // Section 2 — Supply Chain Review (if done)
     (sc.scName?
       '<div style="padding:0 1.6rem 1.4rem">'+
-      '<div class="det-sec">Section 2 \u2014 Supply Chain Review</div>'+
+      '<div class="det-sec">Section 2 - Supply Chain Review</div>'+
       '<div class="rgrid" style="margin-bottom:0.6rem">'+
       gRows([['Reviewed By',sc.scName],['Supply Chain Email',sc.scEmail],['Reviewed At',sc.reviewedAt],['BOM Status',sc.bomStatus],['Tooling Status',sc.toolingStatus],['Impact to Other Orders',sc.orderImpact],['Lead Time',sc.leadTime]])+
       '</div>'+
-      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Supply Chain Decision</div><div class="rv" style="font-weight:700;color:'+decColor(sc.scDecision)+'">'+esc(sc.scDecision||'\u2014')+'</div></div>'+
+      '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Supply Chain Decision</div><div class="rv" style="font-weight:700;color:'+decColor(sc.scDecision)+'">'+esc(sc.scDecision||'-')+'</div></div>'+
       (sc.scComments?'<div class="ri"><div class="rl">Supply Chain Comments</div><div class="rv">'+esc(sc.scComments)+'</div></div>':'')+
       '</div>' : '')+
 
     // Section 3 — Escalation (if escalated)
     (er?
       '<div style="padding:0 1.6rem 1.4rem">'+
-      '<div class="det-sec">Section 3 \u2014 Escalation</div>'+
+      '<div class="det-sec">Section 3 - Escalation</div>'+
       '<div class="ri"><div class="rl">Reason for Escalation</div><div class="rv">'+esc(er)+'</div></div>'+
       '</div>' : '')+
 
     // Section 4 — Management Decision (if done)
     (mg.mgmtDecision?
       '<div style="padding:0 1.6rem 1.4rem">'+
-      '<div class="det-sec">Section 4 \u2014 Management Decision</div>'+
+      '<div class="det-sec">Section 4 - Management Decision</div>'+
       '<div class="rgrid" style="margin-bottom:0.5rem">'+gRows([['Decision',mg.mgmtDecision],['Reviewed At',mg.reviewedAt]])+'</div>'+
-      '<div class="ri"><div class="rl">Management Comments</div><div class="rv">'+esc(mg.mgmtComments||'\u2014')+'</div></div>'+
+      '<div class="ri"><div class="rl">Management Comments</div><div class="rv">'+esc(mg.mgmtComments||'-')+'</div></div>'+
       '</div>' : '')+
 
     '<div style="padding:1rem 1.6rem;border-top:1px solid var(--border);font-size:0.65rem;color:var(--muted);text-align:center">Rubberatkins Fast Track Portal &nbsp;&middot;&nbsp; Internal Use Only</div>'+
@@ -1372,8 +1372,8 @@ async function submitInlineSC(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=3;
   await persist();
-  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
-  toast('Supply Chain review submitted \u2014 requestor notified','ok');
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update - '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
+  toast('Supply Chain review submitted - requestor notified','ok');
   closeDetail();
   renderHistory();
 }
@@ -1391,8 +1391,8 @@ async function submitInlineMgmt(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=4;
   await persist();
-  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Management Decision',message_body:buildEmailMgmtDecision()});
-  toast('Management decision submitted \u2014 requestor notified','ok');
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update - '+S.formData.partNumber+' Management Decision',message_body:buildEmailMgmtDecision()});
+  toast('Management decision submitted - requestor notified','ok');
   closeDetail();
   renderHistory();
 }
@@ -1422,20 +1422,20 @@ async function downloadPDF(id){
   if(!data){ toast('Could not load request data for PDF','err'); return; }
 
   const fd=data.formData||{}, sc=data.scData||{}, mg=data.mgmtData||{}, er=data.escalationReason||'';
-  const statusMap={1:'Draft',2:'Awaiting Supply Chain Review',3:'Awaiting Requestor Decision','3b':'Escalated to Management',4:mg.mgmtDecision?'Complete \u2014 '+mg.mgmtDecision:'Closed \u2014 Accepted'};
+  const statusMap={1:'Draft',2:'Awaiting Supply Chain Review',3:'Awaiting Requestor Decision','3b':'Escalated to Management',4:mg.mgmtDecision?'Complete - '+mg.mgmtDecision:'Closed - Accepted'};
   const e=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  const row=(l,v)=>'<tr><td style="padding:7px 10px;background:#f8f8f8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#888;width:38%;border:1px solid #e5e7eb;vertical-align:top">'+e(l)+'</td><td style="padding:7px 10px;border:1px solid #e5e7eb;font-size:12px;vertical-align:top">'+e(String(v||'\u2014'))+'</td></tr>';
+  const row=(l,v)=>'<tr><td style="padding:7px 10px;background:#f8f8f8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#888;width:38%;border:1px solid #e5e7eb;vertical-align:top">'+e(l)+'</td><td style="padding:7px 10px;border:1px solid #e5e7eb;font-size:12px;vertical-align:top">'+e(String(v||'-'))+'</td></tr>';
   const wideRow=(l,v)=>'<tr><td colspan="2" style="padding:0"><table style="width:100%;border-collapse:collapse"><tr>'+row(l,v)+'</tr></table></td></tr>';
-  const secHead=(n,t)=>'<h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#888;margin:24px 0 8px;padding-bottom:6px;border-bottom:2px solid #0f0f0e">'+n+' \u2014 '+t+'</h3>';
+  const secHead=(n,t)=>'<h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#888;margin:24px 0 8px;padding-bottom:6px;border-bottom:2px solid #0f0f0e">'+n+' - '+t+'</h3>';
   const decColor=d=>d==='Approved'?'#059669':d==='Declined'?'#dc2626':'#d97706';
 
   const htmlContent =
     '<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #0f0f0e">'+
-    '<div style="font-size:18px;font-weight:800;margin-bottom:4px">'+e(fd.partNumber||'Request')+' \u2014 '+e(fd.customerName||'')+'</div>'+
+    '<div style="font-size:18px;font-weight:800;margin-bottom:4px">'+e(fd.partNumber||'Request')+' - '+e(fd.customerName||'')+'</div>'+
     '<div style="font-size:11px;color:#888;display:flex;gap:16px;flex-wrap:wrap">'+
     '<span>&#128196; '+e(fd.id||'')+'</span>'+
-    '<span>Submitted: '+e(fd.submittedAt||'\u2014')+'</span>'+
+    '<span>Submitted: '+e(fd.submittedAt||'-')+'</span>'+
     '<span>Status: <strong style="color:#0f0f0e">'+e(statusMap[data.stage]||String(data.stage))+'</strong></span>'+
     '</div></div>'+
 
@@ -1446,7 +1446,7 @@ async function downloadPDF(id){
     '<tr>'+row('Part Number',fd.partNumber)+row('Description',fd.partDescription)+'</tr>'+
     '<tr>'+row('Quantity',fd.quantity)+row('Order Type',fd.orderType)+'</tr>'+
     '<tr>'+row('Quote / SOP',fd.sopNumber)+row('Repeat / NPI',fd.repeatNpi)+'</tr>'+
-    '<tr>'+row('Tooling',fd.tooling)+row('Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No')+'</tr>'+
+    '<tr>'+row('Tooling',fd.tooling)+row('Expedite Fee',fd.expediteFee==='Yes'?'Yes - '+fd.expediteAmount:'No')+'</tr>'+
     '</table>'+
     '<table style="width:100%;border-collapse:collapse;margin-bottom:4px"><tr>'+wideRow('Customer Requirements',fd.customerReqs)+'</tr><tr>'+wideRow('RA Justification',fd.raJustification)+'</tr></table>'+
 
@@ -1460,7 +1460,7 @@ async function downloadPDF(id){
       '</table>'+
       '<table style="width:100%;border-collapse:collapse;margin-bottom:4px">'+
       '<tr><td style="padding:7px 10px;background:#f8f8f8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#888;width:38%;border:1px solid #e5e7eb">SUPPLY CHAIN DECISION</td>'+
-      '<td style="padding:7px 10px;border:1px solid #e5e7eb;font-size:12px;font-weight:700;color:'+decColor(sc.scDecision)+'">'+e(sc.scDecision||'\u2014')+'</td></tr>'+
+      '<td style="padding:7px 10px;border:1px solid #e5e7eb;font-size:12px;font-weight:700;color:'+decColor(sc.scDecision)+'">'+e(sc.scDecision||'-')+'</td></tr>'+
       '<tr>'+wideRow('Supply Chain Comments',sc.scComments)+'</tr>'+
       '</table>': '')+
 
@@ -1493,7 +1493,7 @@ async function downloadPDF(id){
     '</head><body>'+
     '<div style="background:#0f0f0e;color:#fff;padding:14px 20px;margin-bottom:20px;border-radius:6px;display:flex;align-items:center;gap:12px">'+
     '<strong style="font-size:15px;font-family:monospace">RA</strong>'+
-    '<span style="font-size:10px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em">Rubberatkins \u2014 Fast Track Portal</span>'+
+    '<span style="font-size:10px;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em">Rubberatkins - Fast Track Portal</span>'+
     '</div>'+
     htmlContent+
     '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#aaa;text-align:center">Rubberatkins Fast Track Portal \u00b7 Internal Use Only</div>'+
@@ -1513,7 +1513,7 @@ async function downloadPDF(id){
 // ═══════════════════════════════════════════════
 function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function gRows(rows){ return rows.map(([l,v])=>'<div class="ri"><div class="rl">'+esc(l)+'</div><div class="rv">'+esc(String(v||'\u2014'))+'</div></div>').join(''); }
+function gRows(rows){ return rows.map(([l,v])=>'<div class="ri"><div class="rl">'+esc(l)+'</div><div class="rv">'+esc(String(v||'-'))+'</div></div>').join(''); }
 function selR(g,el,v){ document.querySelectorAll('#'+g+' .rb').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); S.radio[g]=v; }
 function showExp(s){ const e=document.getElementById('expAmt'); if(e) e.style.display=s?'flex':'none'; }
 
@@ -1555,7 +1555,7 @@ function dlSummary(){
       '<tr><td>Lead Time</td><td>'+esc(sc.leadTime)+'</td></tr>'+
       '<tr><td>BOM Status</td><td>'+esc(sc.bomStatus)+'</td></tr>'+
       '<tr><td>Tooling Status</td><td>'+esc(sc.toolingStatus)+'</td></tr>'+
-      '<tr><td>Comments</td><td>'+esc(sc.scComments||'\u2014')+'</td></tr></table>':'')+
+      '<tr><td>Comments</td><td>'+esc(sc.scComments||'-')+'</td></tr></table>':'')+
     (mg.mgmtDecision?'<h2>&#128084; Management Decision</h2><table>'+
       '<tr><td>Decision</td><td><strong>'+esc(mg.mgmtDecision)+'</strong></td></tr>'+
       '<tr><td>Comments</td><td>'+esc(mg.mgmtComments)+'</td></tr>'+
@@ -1584,7 +1584,7 @@ function fmtBytes(b){ if(b<1024)return b+'B'; if(b<1048576)return(b/1024).toFixe
 
 function handleAttach(input){
   const file=input.files[0]; if(!file) return;
-  if(file.size>10*1024*1024){toast('File too large \u2014 max 10MB','warn');input.value='';return;}
+  if(file.size>10*1024*1024){toast('File too large - max 10MB','warn');input.value='';return;}
   S.attachment={name:file.name,size:fmtBytes(file.size),file:file,type:file.type};
   const p=document.getElementById('attachPreview');
   if(p){
@@ -1657,7 +1657,7 @@ async function saveCfg(){
   if(btn){btn.disabled=false;btn.innerHTML='&#128190; Save &amp; Sync to All Devices';}
   closeCfg();
   if(synced) toast('\u2705 Settings saved &amp; synced to all devices','ok');
-  else toast('Settings saved \u2014 Supabase sync failed, check connection','warn');
+  else toast('Settings saved - Supabase sync failed, check connection','warn');
 }
 
 async function testDB(){
@@ -1675,9 +1675,9 @@ async function testEmail(){
   saveCfg();
   const btn=document.getElementById('testBtn');
   btn.disabled=true; btn.innerHTML='<div class="spin spin-dk"></div> Sending\u2026';
-  const ok=await sendEmail(CFG.t1,{to_email:CFG.scEmails||'test@test.com',subject:'EmailJS Test \u2014 Fast Track Portal',message_body:'<p style="font-family:Arial,sans-serif">This is a test. EmailJS is configured correctly.</p>'});
+  const ok=await sendEmail(CFG.t1,{to_email:CFG.scEmails||'test@test.com',subject:'EmailJS Test - Fast Track Portal',message_body:'<p style="font-family:Arial,sans-serif">This is a test. EmailJS is configured correctly.</p>'});
   btn.disabled=false; btn.innerHTML='&#129514; Send Test Email';
-  if(ok) toast('Test email sent \u2014 check your inbox','ok');
+  if(ok) toast('Test email sent - check your inbox','ok');
 }
 
 function copySQL(){
