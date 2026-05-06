@@ -341,8 +341,8 @@ const CFG = {
   svc:       'service_yvvqhwq',
   t1:        'template_6l6gwas',  // New request → Supply Chain
   t2:        'template_sg4j83f',  // All other notifications
-  scEmails:  'scfasttrack@rubberatkins.com',
-  mgmtEmail: 'amore@rubberatkins.com',
+  scEmails:  'drafiq@rubberatkins.com',
+  mgmtEmail: 'drafiq@rubberatkins.com',
 };
 
 // ═══════════════════════════════════════════════
@@ -395,7 +395,7 @@ function stateToRecord(){
   const fd=S.formData, sc=S.scData||{}, mg=S.mgmtData||{}, st=S.stage;
   return {
     id:fd.id, submittedAt:fd.submittedAt,
-    requestorName:fd.requestorName, requestorEmail:fd.requestorEmail,
+    requestorName:fd.requestorName, requestorEmail:fd.requestorEmail, ccEmails:fd.ccEmails,
     customerName:fd.customerName, location:fd.location,
     orderType:fd.orderType, sopNumber:fd.sopNumber,
     partNumber:fd.partNumber, partDescription:fd.partDescription, quantity:fd.quantity,
@@ -439,7 +439,7 @@ async function dbSave(rec){
   try{
     const{error} = await SUPABASE.from('fast_track_requests').upsert({
       id:rec.id, submitted_at:rec.submittedAt,
-      requestor_name:rec.requestorName, requestor_email:rec.requestorEmail,
+      requestor_name:rec.requestorName, requestor_email:rec.requestorEmail, cc_emails:rec.ccEmails||null,
       customer_name:rec.customerName, location:rec.location,
       order_type:rec.orderType, sop_number:rec.sopNumber,
       part_number:rec.partNumber, part_description:rec.partDescription, quantity:rec.quantity,
@@ -469,7 +469,7 @@ async function dbLoad(id){
       status: data.status,
       formData:{
         id:data.id, submittedAt:data.submitted_at,
-        requestorName:data.requestor_name, requestorEmail:data.requestor_email,
+        requestorName:data.requestor_name, requestorEmail:data.requestor_email, ccEmails:data.cc_emails,
         customerName:data.customer_name, location:data.location,
         orderType:data.order_type, sopNumber:data.sop_number,
         partNumber:data.part_number, partDescription:data.part_description, quantity:data.quantity,
@@ -529,6 +529,9 @@ async function sendEmail(tid, params){
   try{ await emailjs.send(CFG.svc, tid, params); return true; }
   catch(e){ console.warn('Email failed',e); toast('Email notification failed \u2014 check EmailJS settings','warn'); return false; }
 }
+
+// Build combined to+cc address for EmailJS (comma-separated)
+function toWithCC(primary, cc){ return cc ? primary+','+cc : primary; }
 
 function portalUrl(id, action){
   const base = window.location.href.split('?')[0].replace(/#.*$/,'');
@@ -810,7 +813,7 @@ async function submitActionSC(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=3;
   await persist();
-  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
 
   document.getElementById('actionBox').innerHTML=
     '<div style="text-align:center;padding:2rem">'+
@@ -837,7 +840,7 @@ async function submitActionMgmt(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=4;
   await persist();
-  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track \u2014 Management Decision for '+S.formData.partNumber,message_body:buildEmailMgmtDecision()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track \u2014 Management Decision for '+S.formData.partNumber,message_body:buildEmailMgmtDecision()});
 
   document.getElementById('actionBox').innerHTML=
     '<div style="text-align:center;padding:2rem">'+
@@ -911,6 +914,9 @@ function buildReqForm(ro){
     '<div class="frow">'+
     '<div class="field"><label>Your Name <span class="req">*</span></label><input id="f_name" value="'+esc(fd.requestorName||'')+'" '+r+' placeholder="Full name"></div>'+
     '<div class="field"><label>Your Email <span class="req">*</span></label><input id="f_email" type="email" value="'+esc(fd.requestorEmail||'')+'" '+r+' placeholder="you@company.com"></div></div>'+
+    '<div class="frow full">'+
+    '<div class="field"><label>CC <span style="font-size:0.62rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(optional — separate multiple emails with commas)</span></label>'+
+    '<input id="f_cc" type="text" value="'+esc(fd.ccEmails||'')+'" '+r+' placeholder="colleague@company.com, manager@company.com"></div></div>'+
     '<div class="frow">'+
     '<div class="field"><label>Customer Name <span class="req">*</span></label><input id="f_cust" value="'+esc(fd.customerName||'')+'" '+r+' placeholder="Customer company"></div>'+
     '<div class="field"><label>Location</label><input id="f_loc" value="'+esc(fd.location||'')+'" '+r+' placeholder="e.g. UK, Ireland"></div></div>'+
@@ -988,7 +994,7 @@ async function submitReq(){
   if(btn){btn.disabled=true;btn.innerHTML='<div class="spin"></div> Submitting\u2026';}
   S.formData={
     id:'FT-'+Date.now(), submittedAt:new Date().toLocaleString('en-GB'),
-    requestorName:fv('f_name'), requestorEmail:fv('f_email'),
+    requestorName:fv('f_name'), requestorEmail:fv('f_email'), ccEmails:fv('f_cc'),
     customerName:fv('f_cust'), location:fv('f_loc'),
     orderType:S.radio.orderType||'Live Order', sopNumber:fv('f_sop'),
     partNumber:fv('f_part'), partDescription:fv('f_desc'), quantity:fv('f_qty'),
@@ -1187,7 +1193,7 @@ function buildDetailHTML(data, id){
     '<div style="padding:1.4rem 1.6rem">'+
     '<div class="det-sec" style="margin-top:0">Section 1 \u2014 Request Details</div>'+
     '<div class="rgrid" style="margin-bottom:0.6rem">'+
-    gRows([['Requestor',fd.requestorName],['Email',fd.requestorEmail],['Customer',fd.customerName],['Location',fd.location],['Part Number',fd.partNumber],['Description',fd.partDescription],['Quantity',fd.quantity],['Order Type',fd.orderType],['Quote / SOP',fd.sopNumber],['Repeat / NPI',fd.repeatNpi],['Tooling',fd.tooling],['Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No']])+
+    gRows([['Requestor',fd.requestorName],['Email',fd.requestorEmail],['CC',fd.ccEmails||'\u2014'],['Customer',fd.customerName],['Location',fd.location],['Part Number',fd.partNumber],['Description',fd.partDescription],['Quantity',fd.quantity],['Order Type',fd.orderType],['Quote / SOP',fd.sopNumber],['Repeat / NPI',fd.repeatNpi],['Tooling',fd.tooling],['Expedite Fee',fd.expediteFee==='Yes'?'Yes \u2014 '+fd.expediteAmount:'No']])+
     '</div>'+
     '<div class="ri" style="margin-bottom:0.5rem"><div class="rl">Customer Requirements</div><div class="rv">'+esc(fd.customerReqs||'\u2014')+'</div></div>'+
     '<div class="ri"'+(fd.attachmentName?'':' style="margin-bottom:0"')+'><div class="rl">RA Justification</div><div class="rv">'+esc(fd.raJustification||'\u2014')+'</div></div>'+
@@ -1366,7 +1372,7 @@ async function submitInlineSC(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=3;
   await persist();
-  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Supply Chain Reviewed',message_body:buildEmailSCReview()});
   toast('Supply Chain review submitted \u2014 requestor notified','ok');
   closeDetail();
   renderHistory();
@@ -1385,7 +1391,7 @@ async function submitInlineMgmt(id){
   S.escalationReason=data.escalationReason||'';
   S.stage=4;
   await persist();
-  await sendEmail(CFG.t2,{to_email:S.formData.requestorEmail,subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Management Decision',message_body:buildEmailMgmtDecision()});
+  await sendEmail(CFG.t2,{to_email:toWithCC(S.formData.requestorEmail,S.formData.ccEmails),subject:'Fast Track Update \u2014 '+S.formData.partNumber+' Management Decision',message_body:buildEmailMgmtDecision()});
   toast('Management decision submitted \u2014 requestor notified','ok');
   closeDetail();
   renderHistory();
