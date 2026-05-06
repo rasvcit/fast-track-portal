@@ -915,11 +915,11 @@ function buildReqForm(ro){
     '<div class="field"><label>Your Name <span class="req">*</span></label><input id="f_name" value="'+esc(fd.requestorName||'')+'" '+r+' placeholder="Full name"></div>'+
     '<div class="field"><label>Your Email <span class="req">*</span></label><input id="f_email" type="email" value="'+esc(fd.requestorEmail||'')+'" '+r+' placeholder="you@company.com"></div></div>'+
     '<div class="frow full">'+
-    '<div class="field"><label>CC <span style="font-size:0.62rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(optional — separate multiple emails with commas)</span></label>'+
-    '<input id="f_cc" type="text" value="'+esc(fd.ccEmails||'')+'" '+r+' placeholder="colleague@company.com, manager@company.com"></div></div>'+
+    '<div class="field"><label>CC <span style="font-size:0.62rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(separate multiple emails with commas)</span></label>'+
+    '<input id="f_cc" type="text" value="'+esc(fd.ccEmails||'')+'" '+r+' placeholder="xyz@rubberatkins.com"></div></div>'+
     '<div class="frow">'+
     '<div class="field"><label>Customer Name <span class="req">*</span></label><input id="f_cust" value="'+esc(fd.customerName||'')+'" '+r+' placeholder="Customer company"></div>'+
-    '<div class="field"><label>Location</label><input id="f_loc" value="'+esc(fd.location||'')+'" '+r+' placeholder="e.g. UK, Ireland"></div></div>'+
+    '<div class="field"><label>Location</label><input id="f_loc" value="'+esc(fd.location||'')+'" '+r+' placeholder="e.g. UK"></div></div>'+
     '<div class="frow">'+
     '<div class="field"><label>Order Type <span class="req">*</span></label><div class="rg" id="orderType">'+['Live Order','Potential Order'].map(v=>'<label class="rb '+rc+' '+sel('orderType',v)+'" onclick="selR(\'orderType\',this,\''+v+'\')">'+v+'</label>').join('')+'</div></div>'+
     '<div class="field"><label>Quote / SOP Number</label><input id="f_sop" value="'+esc(fd.sopNumber||'')+'" '+r+' placeholder="e.g. SOP-12345"></div></div>'+
